@@ -15,3 +15,4 @@ services:
     - .env
   redis:
     image: "redis:alpine"
+  

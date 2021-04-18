@@ -10,10 +10,12 @@ from dotenv import load_dotenv
 from TikTokApi import TikTokApi
 
 
-did=''.join(random.choice(string.digits) for num in range(19))
-verifyFp= os.environ.get('TIKTOK_TOKEN')
-tiktok_api = TikTokApi.get_instance(custom_verifyFp=verifyFp, custom_did=did)
-# tiktok_api = TikTokApi.get_instance()
+verifyFp = os.environ.get('TIKTOK_TOKEN', None)
+if verifyFp is None:
+    tiktok_api = TikTokApi.get_instance()
+else:
+    did = ''.join(random.choice(string.digits) for num in range(19))
+    tiktok_api = TikTokApi.get_instance(custom_verifyFp=verifyFp, custom_did=did)
 
 redis_db = redis.Redis(host='redis', port=6379)
 
