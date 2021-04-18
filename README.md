@@ -1,5 +1,5 @@
 # Discord bot controlled by TikTok notifications
-![](demo.gif)
+![](demo.gif)  
 Sending cat picture for each follower and every N reactions for specific TikTok video. I'm not sure why I did it. 
 
 ## Requirements
