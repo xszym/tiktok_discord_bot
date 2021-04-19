@@ -20,7 +20,7 @@ else:
 redis_db = redis.Redis(host='redis', port=6379)
 
 TIKTOK_NAME = os.environ.get('TIKTOK_USER_NAME')
-tiktok_id = os.environ.get('TIKTOK_ID')
+tiktok_id = os.environ.get('TIKTOK_ID', get_tiktoks_ids_for_user()[0])
 
 
 def get_tiktok_stats(tiktok_id):
@@ -62,7 +62,7 @@ def update_tiktok_stats_to_db():
         time.sleep(0.5)
 
 
-def get_tiktoks_ids_for_user(username = TIKTOK_NAME, count=10):
+def get_tiktoks_ids_for_user(username=TIKTOK_NAME, count=1):
     # returns list of ids
     tiktoks = tiktok_api.byUsername(username, count=count)
     result = []

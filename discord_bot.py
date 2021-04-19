@@ -13,9 +13,7 @@ import redis
 import requests
 
 
-
 nest_asyncio.apply()
-
 redis_db = redis.Redis(host='redis', port=6379)
 
 discord_channel_id = int(os.environ.get('DISCORD_CHANNEL_ID'))
@@ -48,7 +46,8 @@ class MyClient(discord.Client):
         self.last_send_discord_msg = None
         self.msg_channel = None
 
-        self.my_background_task.start()
+        self.reactions_task.start()
+        self.followers_task.start()
 
     async def on_ready(self):
         print('Logged in as')
@@ -73,7 +72,7 @@ class MyClient(discord.Client):
             await self.last_send_discord_msg.add_reaction(emoji_arr[x])
 
     @tasks.loop(seconds=1)
-    async def my_background_task(self):
+    async def followers_task(self):
         # Followers msg
         now_tiktok_followers = int(redis_db.get('followerCount'))
         delta_followers = now_tiktok_followers - self.last_followers_count
@@ -86,6 +85,8 @@ class MyClient(discord.Client):
         if now_tiktok_followers > self.last_followers_count:
             self.last_followers_count = now_tiktok_followers
 
+    @tasks.loop(seconds=1)
+    async def reactions_task(self):
         # Video reactions msg
         now_tiktok_likes = int(redis_db.get('diggCount'))
         now_tiktok_reactions = int(redis_db.get('diggCount')) + int(redis_db.get('shareCount')) + int(redis_db.get('commentCount'))
@@ -103,13 +104,16 @@ class MyClient(discord.Client):
         else:
             if self.last_send_discord_msg is not None:
                 await self.add_emoji_cout_to_last_msg(delta_reactions)
-            # print("Reactions ", delta_reactions)
+        if delta_reactions > 0:
+            print("Reactions delta: ", delta_reactions)
 
-    @my_background_task.before_loop
-    async def before_my_task(self):
+    @followers_task.before_loop
+    @reactions_task.before_loop
+    async def before_task(self):
         await self.wait_until_ready() # wait until the bot logs in
         self.msg_channel = self.get_channel(discord_channel_id) 
         self.last_followers_count = int(redis_db.get('followerCount'))
+    
     
 client = MyClient()
 client.run(TOKEN)
