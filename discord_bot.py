@@ -78,7 +78,7 @@ class MyClient(discord.Client):
         delta_followers = now_tiktok_followers - self.last_followers_count
         for x in range(self.last_followers_count, now_tiktok_followers):
             await self.send_msg_with_cat( 
-                f"Kot dla {x} followera ❤️", 
+                f"Kot dla {x+1} followera ❤️", 
                 f"Wszystkie koty się pochowały, więc zdjęcia nie ma, ale specjalne podziękowania dla {now_tiktok_followers} followera <3",
                 False)
             print("New follower")
