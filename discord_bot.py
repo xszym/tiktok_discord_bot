@@ -42,7 +42,7 @@ class MyClient(discord.Client):
         super().__init__(*args, **kwargs)
 
         self.last_reactions_count = 0 # int(redis_db.get('diggCount'))
-        self.last_followers_count = int(redis_db.get('followerCount'))
+        self.last_followers_count = int(redis_db.get('followerCount'), 0)
         self.last_send_discord_msg = None
         self.msg_channel = None
 

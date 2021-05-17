@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from TikTokApi import TikTokApi
 
 
+TIKTOK_NAME = os.environ.get('TIKTOK_USER_NAME')
 verifyFp = os.environ.get('TIKTOK_TOKEN', None)
 if verifyFp is None:
     tiktok_api = TikTokApi.get_instance()
@@ -19,7 +20,6 @@ else:
 
 redis_db = redis.Redis(host='redis', port=6379)
 
-TIKTOK_NAME = os.environ.get('TIKTOK_USER_NAME')
 
 def get_tiktoks_ids_for_user(username=TIKTOK_NAME, count=1):
     # returns list of ids
@@ -28,6 +28,7 @@ def get_tiktoks_ids_for_user(username=TIKTOK_NAME, count=1):
     for tiktok in tiktoks:
         result.append(tiktok['id'])
     return result
+
 
 def get_tiktok_stats(tiktok_id):
     itemStruct = tiktok_api.get_tiktok_by_id(tiktok_id)['itemInfo']['itemStruct']
