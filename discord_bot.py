@@ -46,7 +46,7 @@ class MyClient(discord.Client):
         self.last_send_discord_msg = None
         self.msg_channel = None
 
-        self.reactions_task.start()
+        # self.reactions_task.start()
         self.followers_task.start()
 
     async def on_ready(self):
