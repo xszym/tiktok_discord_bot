@@ -1,6 +1,6 @@
-TikTokApi
 discord.py
 python-dotenv
 nest_asyncio
 redis
 requests
+selenium

@@ -2,76 +2,66 @@ import os
 import string
 import random
 import time
-
 import asyncio
+
 import pprint
 import redis
 from dotenv import load_dotenv
-from TikTokApi import TikTokApi
+
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 
 TIKTOK_NAME = os.environ.get('TIKTOK_USER_NAME')
-verifyFp = os.environ.get('TIKTOK_TOKEN', None)
-if verifyFp is None:
-    tiktok_api = TikTokApi.get_instance()
-else:
-    did = ''.join(random.choice(string.digits) for num in range(19))
-    tiktok_api = TikTokApi.get_instance(custom_verifyFp=verifyFp, custom_did=did)
-
 redis_db = redis.Redis(host='redis', port=6379)
 
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+driver = webdriver.Chrome('chromedriver', options=options)
 
-def get_tiktoks_ids_for_user(username=TIKTOK_NAME, count=1):
-    # returns list of ids
-    tiktoks = tiktok_api.byUsername(username, count=count)
-    result = []
-    for tiktok in tiktoks:
-        result.append(tiktok['id'])
-    return result
+url = "https://tokcount.com/?user=" + TIKTOK_NAME
 
+last_followers_value = -1
+def get_account_stats():
+    global last_followers_value
+    driver.get(url)
+    time.sleep(random.randrange(5,10))
+    try:
+        myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.ID, '__next')))
+        result = myElem.text.split(TIKTOK_NAME)[1].split('Likes')[0].replace('\n', '').replace(',', '').split('Followers')
+        result = [int(x) for x in result]
+        followers = result[0]
+        likes = result[1]
+        
+        if followers - last_followers_value > 1000 and last_followers_value != -1:
+            raise Exception("Wrong number of followes") 
 
-def get_tiktok_stats(tiktok_id):
-    itemStruct = tiktok_api.get_tiktok_by_id(tiktok_id)['itemInfo']['itemStruct']
-
-    # ['diggCount', 'shareCount', 'commentCount', 'playCount']
-    tiktok_stats = itemStruct['stats']
-
-    # {'followingCount': 191, 'followerCount': 446, 'heartCount': 22500, 'videoCount': 11, 'diggCount': 3176, 'heart': 22500}
-    tiktok_author_stats = itemStruct['authorStats']
-
-    return tiktok_stats, tiktok_author_stats
+        last_followers_value = followers
+        return followers, likes
+    except TimeoutException:
+        print("Loading took too much time!")
 
 
 def update_tiktok_stats_to_db():
-    tiktok_stats, tiktok_author_stats = {}, {}
     try:
-        tiktok_stats, tiktok_author_stats = get_tiktok_stats(tiktok_id)
-        print("followerCount:", tiktok_author_stats.get('followerCount'), 
-          "| heartCount:", tiktok_author_stats.get('heartCount'))
-        print("diggCount:", tiktok_stats.get('diggCount'), 
-          "| commentCount:", tiktok_stats.get('commentCount'),
-          "| shareCount:", tiktok_stats.get('shareCount'))
+        followers, likes = get_account_stats()
+        print("followerCount:", followers, 
+          "| heartCount:", likes)
+
+        redis_db.set('followerCount', followers)
+        redis_db.set('heartCount', likes)
+
     except:
         print("TikTok data download error")
 
-    try:   
-        tiktok_likes = tiktok_stats.get('diggCount', 0)
-
-        redis_db.set('diggCount', tiktok_stats.get('diggCount', 0))
-        redis_db.set('shareCount', tiktok_stats.get('shareCount', 0))
-        redis_db.set('commentCount', tiktok_stats.get('commentCount', 0))
-        redis_db.set('playCount', tiktok_stats.get('playCount', 0))
-
-        redis_db.set('followerCount', tiktok_author_stats.get('followerCount', 0))
-        redis_db.set('heartCount', tiktok_author_stats.get('heartCount', 0))
-    except:
-        print("Update error")
-        time.sleep(0.5)
-
 
 print("TikTokBot starts...")
-tiktok_id = os.environ.get('TIKTOK_ID', get_tiktoks_ids_for_user()[0])
 while True:
     update_tiktok_stats_to_db()
-    time.sleep(3)
+    time.sleep(5)
 

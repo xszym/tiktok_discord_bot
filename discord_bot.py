@@ -41,7 +41,7 @@ class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.last_reactions_count = int(redis_db.get('diggCount'))
+        self.last_reactions_count = int(redis_db.get('heartCount'))
         self.last_followers_count = int(redis_db.get('followerCount'))
         self.last_send_discord_msg = None
         self.msg_channel = None
@@ -85,35 +85,12 @@ class MyClient(discord.Client):
         if now_tiktok_followers > self.last_followers_count:
             self.last_followers_count = now_tiktok_followers
 
-    @tasks.loop(seconds=1)
-    async def reactions_task(self):
-        # Video reactions msg
-        now_tiktok_likes = int(redis_db.get('diggCount'))
-        now_tiktok_reactions = int(redis_db.get('diggCount')) + int(redis_db.get('shareCount')) + int(redis_db.get('commentCount'))
-        delta_reactions = now_tiktok_reactions - self.last_reactions_count
-        if delta_reactions >= pic_every_x_reactions:
-            if self.last_send_discord_msg is not None: 
-                await self.add_emoji_cout_to_last_msg(pic_every_x_reactions)
-                await self.last_send_discord_msg.add_reaction('🐈')
-            
-            await self.send_msg_with_cat( 
-                f"Kot na {now_tiktok_reactions} reakcji ❤️", 
-                f"Wszystkie koty się pochowały, więc zdjęcia nie ma, ale jest {now_tiktok_reactions} interakcji w tym {now_tiktok_likes} serduszek <3")
-            print("New cat for reactions")
-            self.last_reactions_count = now_tiktok_reactions
-        else:
-            if self.last_send_discord_msg is not None:
-                await self.add_emoji_cout_to_last_msg(delta_reactions)
-        if delta_reactions > 0:
-            print("Reactions delta: ", delta_reactions)
-
     @followers_task.before_loop
-    @reactions_task.before_loop
     async def before_task(self):
         await self.wait_until_ready() # wait until the bot logs in
         self.msg_channel = self.get_channel(discord_channel_id) 
         self.last_followers_count = int(redis_db.get('followerCount'))
-    
-    
+
+time.sleep(30)
 client = MyClient()
 client.run(TOKEN)
