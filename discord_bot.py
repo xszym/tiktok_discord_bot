@@ -91,6 +91,6 @@ class MyClient(discord.Client):
         self.msg_channel = self.get_channel(discord_channel_id) 
         self.last_followers_count = int(redis_db.get('followerCount'))
 
-time.sleep(30)
+time.sleep(40)
 client = MyClient()
 client.run(TOKEN)

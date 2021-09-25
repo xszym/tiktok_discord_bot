@@ -30,13 +30,14 @@ last_followers_value = -1
 def get_account_stats():
     global last_followers_value
     driver.get(url)
-    time.sleep(random.randrange(5,10))
+    time.sleep(random.randrange(10,20))
     try:
         myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.ID, '__next')))
         result = myElem.text.split(TIKTOK_NAME)[1].split('Likes')[0].replace('\n', '').replace(',', '').split('Followers')
         result = [int(x) for x in result]
         followers = result[0]
         likes = result[1]
+        del myElem
         
         if followers - last_followers_value > 1000 and last_followers_value != -1:
             raise Exception("Wrong number of followes") 
@@ -45,6 +46,8 @@ def get_account_stats():
         return followers, likes
     except TimeoutException:
         print("Loading took too much time!")
+    except Exception as e:
+        print(e) 
 
 
 def update_tiktok_stats_to_db():
@@ -63,5 +66,4 @@ def update_tiktok_stats_to_db():
 print("TikTokBot starts...")
 while True:
     update_tiktok_stats_to_db()
-    time.sleep(5)
-
+    time.sleep(random.randrange(60,600))
